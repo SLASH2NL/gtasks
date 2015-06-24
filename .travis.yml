@@ -1,0 +1,13 @@
+language: go
+
+notifications:
+  email: false
+
+install:
+  - export PATH=$PATH:$HOME/gopath/bin
+
+script:
+  - go test github.com/SLASH2NL/gtasks
+
+go:
+  - 1.4
