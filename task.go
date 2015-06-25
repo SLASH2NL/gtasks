@@ -20,17 +20,13 @@ type Runner struct {
 	mu    sync.RWMutex
 }
 
-// Run will start the tasks, use parallel = true to start the tasks in parallel
-func (r *Runner) Run(parallel bool) {
+// Run will start the tasks
+func (r *Runner) Run() {
 	r.mu.RLock()
-	for _, Task := range r.tasks {
-		if parallel {
-			go Task.Run()
-		} else {
-			Task.Run()
-		}
+	defer r.mu.RUnlock()
+	for _, task := range r.tasks {
+		go task.Run()
 	}
-	r.mu.RUnlock()
 }
 
 // Cancel stops a single task from executing: see Task.Cancel
@@ -51,6 +47,23 @@ func (r *Runner) CancelAll() {
 		delete(r.tasks, name)
 	}
 	r.mu.Unlock()
+}
+
+// Get returns a task by name
+func (r *Runner) Get(name string) *Task {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	if t, ok := r.tasks[name]; ok {
+		return t
+	}
+	return nil
+}
+
+// All returns all task
+func (r *Runner) All() map[string]*Task {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	return r.tasks
 }
 
 // Add adds a new task to a runner

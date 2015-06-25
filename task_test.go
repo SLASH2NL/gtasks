@@ -45,14 +45,24 @@ func TestTriggerTask(t *testing.T) {
 func TestCancelTask(t *testing.T) {
 	i := 0
 
-	t1 := NewTask(func(chan bool) {
-		i++
-	})
+	r := New()
 
-	triggerchan := make(chan interface{}, 1)
-	t1.After(triggerchan)
-	t1.Cancel()
-	t1.Run()
+	r.Add("t1", func(c chan bool) {
+		not := time.After(time.Second * 5)
+		select {
+		case _, open := <-c:
+			if open == false {
+				return
+			}
+		case <-not:
+			i++
+		}
+	}).Once()
+
+	r.Run()
+	r.Cancel("t1")
+
+	time.Sleep(time.Millisecond * 50)
 
 	if i != 0 {
 		t.Fatal("i should be 0")
@@ -80,27 +90,7 @@ func TestSubscribeTask(t *testing.T) {
 	}
 }
 
-func TestRunnerSynchronous(t *testing.T) {
-	i := 0
-
-	r := New()
-
-	r.Add("t1", func(chan bool) {
-		i++
-	}).Once()
-
-	r.Add("t2", func(chan bool) {
-		i++
-	}).Once()
-
-	r.Run(false)
-
-	if i != 2 {
-		t.Fatal("i should be 2")
-	}
-}
-
-func TestRunnerParallel(t *testing.T) {
+func TestRunner(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping test in short mode.")
 	}
@@ -117,7 +107,7 @@ func TestRunnerParallel(t *testing.T) {
 		i++
 	}).Once()
 
-	r.Run(true)
+	r.Run()
 
 	time.Sleep(time.Millisecond * 200) // sleep for a short duration
 
