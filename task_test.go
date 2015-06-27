@@ -123,7 +123,7 @@ func ExampleTaskAfter() {
 		fmt.Println("ran task1")
 	})
 
-	timedTask.After(Wrap(tick))
+	timedTask.After(tick)
 	timedTask.Once()
 	timedTask.Run()
 

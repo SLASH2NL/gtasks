@@ -108,8 +108,8 @@ func (t *Task) Cancel() {
 // After sets the channel which will start the task.
 // If it is not set the task will run immediately
 // when calling Run and return after that
-func (t *Task) After(c <-chan interface{}) *Task {
-	t.after = c
+func (t *Task) After(c interface{}) *Task {
+	t.after = Wrap(c)
 	return t
 }
 
@@ -172,7 +172,8 @@ func Wrap(ch interface{}) chan interface{} {
 		panic("channels: input to Wrap must be readable channel")
 
 	}
-	realChan := make(chan interface{})
+
+	realChan := make(chan interface{}) // buffer chan
 
 	go func() {
 		v := reflect.ValueOf(ch)
@@ -183,7 +184,10 @@ func Wrap(ch interface{}) chan interface{} {
 				return
 
 			}
-			realChan <- x.Interface()
+			select {
+			case realChan <- x.Interface():
+			default:
+			}
 
 		}
 
