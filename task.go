@@ -92,7 +92,7 @@ func NewTask(f func(chan bool)) *Task {
 type Task struct {
 	f          func(chan bool)
 	cancelchan chan bool
-	after      <-chan interface{}
+	after      chan interface{}
 	listeners  []chan interface{}
 	once       bool
 	runStart   time.Time
@@ -110,6 +110,18 @@ func (t *Task) Cancel() {
 // when calling Run and return after that
 func (t *Task) After(c interface{}) *Task {
 	t.after = Wrap(c)
+	return t
+}
+
+// Now will send a message over the After channel
+// to start the task
+func (t *Task) Now() *Task {
+	if t.after != nil {
+		go func() {
+			t.after <- struct{}{}
+		}()
+	}
+
 	return t
 }
 
@@ -175,6 +187,9 @@ func Wrap(ch interface{}) chan interface{} {
 
 	realChan := make(chan interface{}) // buffer chan
 
+	if t.Elem().Kind() == reflect.Interface {
+		return ch.(chan interface{})
+	}
 	go func() {
 		v := reflect.ValueOf(ch)
 		for {

@@ -21,11 +21,9 @@ func TestTask(t *testing.T) {
 	}
 }
 
-func TestTriggerTask(t *testing.T) {
+func TestNow(t *testing.T) {
 	i := 0
-	triggerchan := make(chan interface{}, 1)
-	triggerchan <- struct{}{} // trigger channel immediately
-
+	tick := time.Tick(time.Second * 10)
 	t1 := &Task{
 		f: func(chan bool) {
 			i++
@@ -33,8 +31,8 @@ func TestTriggerTask(t *testing.T) {
 	}
 
 	t1.Once()
-	t1.After(triggerchan)
-
+	t1.After(tick)
+	t1.Now()
 	t1.Run()
 
 	if i != 1 {
